@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\LectureRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: LectureRepository::class)]
 class Lecture
@@ -14,10 +15,21 @@ class Lecture
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank]
+    #[Assert\Length(
+        min: 2,
+        max: 50,
+        minMessage: 'Course name must be at least {{ limit }} characters long',
+        maxMessage: 'Course name cannot be longer than {{ limit }} characters',
+    )]
     private ?string $name = null;
 
     #[ORM\ManyToOne(targetEntity: Course::class)]
     #[ORM\JoinColumn(nullable: false)]
+    #[Assert\Type(
+        type: 'App\Entity\Course',
+        message: 'The value {{ value }} is not a valid {{ type }}.',
+    )]
     private ?Course $blogId = null;
 
     #[ORM\Column]

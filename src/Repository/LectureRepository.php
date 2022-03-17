@@ -17,11 +17,23 @@ use Doctrine\Persistence\ManagerRegistry;
  */
 class LectureRepository extends ServiceEntityRepository
 {
+    /**
+     * LectureRepository constructor.
+     *
+     * @param ManagerRegistry $registry
+     */
     public function __construct(ManagerRegistry $registry)
     {
         parent::__construct($registry, Lecture::class);
     }
 
+    /**
+     * Saving Lecture entity.
+     *
+     * @param Lecture $entity
+     * @param bool $flush
+     * @return void
+     */
     public function save(Lecture $entity, bool $flush = false): void
     {
         $this->getEntityManager()->persist($entity);
@@ -31,6 +43,13 @@ class LectureRepository extends ServiceEntityRepository
         }
     }
 
+    /**
+     * Removing Lecture entity.
+     *
+     * @param Lecture $entity
+     * @param bool $flush
+     * @return void
+     */
     public function remove(Lecture $entity, bool $flush = false): void
     {
         $this->getEntityManager()->remove($entity);
@@ -40,9 +59,16 @@ class LectureRepository extends ServiceEntityRepository
         }
     }
 
+    /**
+     * Getting Doctrine\ORM\Query object by DQL.
+     *
+     * @param string $where
+     * @return Query
+     */
     public function getQuery(string $where = ""): Query {
         $repositoryClassName = $this->getClassName();
         $dql = "SELECT e FROM $repositoryClassName e $where";
+
         return $this->getEntityManager()->createQuery($dql);
     }
 }

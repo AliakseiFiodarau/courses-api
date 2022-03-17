@@ -29,7 +29,7 @@ class ResponsePaginator
     ) {}
 
     /**
-     * Paginating array of entities.
+     * Paginating query of entities.
      *
      * @param Query $query
      * @param string|null $page
