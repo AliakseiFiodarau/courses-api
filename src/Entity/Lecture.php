@@ -16,7 +16,7 @@ class Lecture
     #[ORM\Column(length: 255)]
     private ?string $name = null;
 
-    #[ORM\ManyToOne(inversedBy: 'lectures')]
+    #[ORM\ManyToOne(targetEntity: Course::class)]
     #[ORM\JoinColumn(nullable: false)]
     private ?Course $blogId = null;
 
