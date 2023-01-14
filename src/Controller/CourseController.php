@@ -3,7 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Course;
-use App\Form\CourseFormType;
+use App\Form\CourseType;
 use App\Repository\CourseRepository;
 use DateTimeImmutable;
 use Symfony\Component\HttpFoundation\Request;
@@ -63,7 +63,7 @@ class CourseController extends AbstractController
         $body = $request->getContent();
         $data = json_decode($body, true);
 
-        $form = $this->createForm(CourseFormType::class, $course);
+        $form = $this->createForm(CourseType::class, $course);
         $form->submit($data);
 
         if ($form->isValid()) {
@@ -99,7 +99,7 @@ class CourseController extends AbstractController
         $body = $request->getContent();
         $data = json_decode($body, true);
 
-        $form = $this->createForm(CourseFormType::class, $course);
+        $form = $this->createForm(CourseType::class, $course);
         $form->submit($data);
 
         if ($form->isValid()) {
