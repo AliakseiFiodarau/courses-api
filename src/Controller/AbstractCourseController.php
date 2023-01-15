@@ -6,8 +6,10 @@ namespace App\Controller;
 
 use App\Service\ResponsePaginator;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepositoryInterface as Repository;
+use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Request;
 
 class AbstractCourseController extends AbstractController
@@ -33,22 +35,22 @@ class AbstractCourseController extends AbstractController
      * @param Repository $repository
      * @param int $id
      * @param string $entityName
-     * @return JsonResponse
+     * @return Response
      */
     public function showEntity(
         Repository $repository,
         int        $id,
         string     $entityName
-    ): JsonResponse {
+    ): Response {
         $entity = $repository->find($id);
 
         if ($entity) {
-            return $this->json([
+            return $this->yaml([
                 'resource' => $entity,
             ]);
         }
 
-        return $this->json([
+        return $this->yaml([
             'message' => "No $entityName found for id $id"
         ]);
     }
@@ -58,15 +60,15 @@ class AbstractCourseController extends AbstractController
      *
      * @param Repository $repository
      * @param Request $request
-     * @return JsonResponse
+     * @return Response
      */
-    public function indexEntity(Repository $repository, Request $request): JsonResponse
+    public function indexEntity(Repository $repository, Request $request): Response
     {
         $totalEntities = $repository->findAll();
         $pageNumber = $request->query->get(ResponsePaginator::PAGE_NUMBER);
         $entities = $this->paginator->paginate($totalEntities, $pageNumber);
 
-        return $this->json([
+        return $this->yaml([
             'page' => $pageNumber,
             'resources' => $entities,
         ]);
@@ -80,7 +82,7 @@ class AbstractCourseController extends AbstractController
      * @param string $propertyName
      * @param Request $request
      * @param string $entityName
-     * @return JsonResponse
+     * @return Response
      */
     public function getByProperty(
         Repository $repository,
@@ -88,20 +90,20 @@ class AbstractCourseController extends AbstractController
         string     $propertyName,
         Request    $request,
         string     $entityName
-    ): JsonResponse {
+    ): Response {
         $totalEntities = $repository->findBy([$propertyName => $value]);
 
         if ($totalEntities) {
             $pageNumber = $request->query->get(ResponsePaginator::PAGE_NUMBER);
             $entities = $this->paginator->paginate($totalEntities, $pageNumber);
 
-            return $this->json([
+            return $this->yaml([
                 'page' => $pageNumber,
                 'resources' => $entities,
             ]);
         }
 
-        return $this->json([
+        return $this->yaml([
             'message' => "No $entityName found for $propertyName with value $value"
         ]);
     }
@@ -112,24 +114,54 @@ class AbstractCourseController extends AbstractController
      * @param Repository $repository
      * @param int $id
      * @param string $entityName
-     * @return JsonResponse
+     * @return Response
      */
     public function deleteEntity(
         Repository $repository,
         int        $id,
         string     $entityName
-    ): JsonResponse {
+    ): Response {
         $entity = $repository->find($id);
         if ($entity) {
-            $repository->remove($entity, true);
+            try {
+                $repository->remove($entity, true);
 
-            return $this->json([
-                'message' => "Resource with id $id has been deleted"
-            ]);
+                return $this->yaml([
+                    'message' => "$entityName with id $id has been deleted"
+                ]);
+            } catch (Exception) {
+                return $this->yaml([
+                    'message' => "Unable to delete $entityName with id $id"
+                ]);
+            }
+
         }
 
-        return $this->json([
+        return $this->yaml([
             'message' => "No $entityName found for id $id"
         ]);
+    }
+
+
+    /**
+     * Returns a Response that uses the serializer component if enabled, or json_encode
+     *
+     * @param mixed $data
+     * @param int $status The HTTP status code (200 "OK" by default)
+     * @param array $headers
+     * @return Response
+     */
+    public function yaml(
+        mixed $data,
+        int $status = 200,
+        array $headers = [],
+    ): Response {
+        if ($this->container->has('serializer')) {
+            $yaml = $this->container->get('serializer')->serialize($data, 'yaml');
+
+            return new Response($yaml, $status, $headers);
+        }
+
+        return new JsonResponse($data, $status, $headers);
     }
 }
