@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\DataFixtures;
 
 use DateTimeImmutable;
@@ -9,7 +11,9 @@ use Doctrine\Persistence\ObjectManager;
 
 class CourseFixtures extends Fixture
 {
-
+    /**
+     * array af names for courses.
+     */
     public const COURSE_NAMES_ARRAY = [
         'books',
         'tea',
@@ -20,6 +24,12 @@ class CourseFixtures extends Fixture
         'vodka'
     ];
 
+    /**
+     * Loading fixture.
+     *
+     * @param ObjectManager $manager
+     * @return void
+     */
     public function load(ObjectManager $manager): void
     {
         foreach (self::COURSE_NAMES_ARRAY as $courseName) {

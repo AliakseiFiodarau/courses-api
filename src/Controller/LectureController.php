@@ -192,6 +192,8 @@ class LectureController extends AbstractCourseController
 
             $this->repository->save($lecture, true);
 
+            $id = $id ?: $lecture->getId();
+
             return $this->json([
                 'message' => self::COURSE_ENTITY_NAME . " resource with id $id has been $createdOrUpdated."
             ]);

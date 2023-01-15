@@ -166,6 +166,8 @@ class CourseController extends AbstractCourseController
 
             $this->repository->save($course, true);
 
+            $id = $id ?: $course->getId();
+
             return $this->json([
                 'message' => self::COURSE_ENTITY_NAME . " resource with id $id has been $createdOrUpdated."
             ]);
