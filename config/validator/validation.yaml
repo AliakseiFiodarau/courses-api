@@ -1,0 +1,21 @@
+App\Entity\Course:
+    properties:
+        name:
+            -   NotBlank: ~
+            -   Length:
+                    min: 2
+                    max: 50
+                    minMessage: 'Course name must be at least {{ limit }} characters long'
+                    maxMessage: 'Course name cannot be longer than {{ limit }} characters'
+
+App\Entity\Lecture:
+    properties:
+        name:
+            -   NotBlank: ~
+            -   Length:
+                    min: 2
+                    max: 50
+                    minMessage: 'Lecture name must be at least {{ limit }} characters long'
+                    maxMessage: 'Lecture name cannot be longer than {{ limit }} characters'
+        blogId:
+            -   Type: App\Entity\Course
