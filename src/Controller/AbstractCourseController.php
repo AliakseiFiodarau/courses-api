@@ -1,0 +1,135 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Controller;
+
+use App\Service\ResponsePaginator;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepositoryInterface as Repository;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+
+class AbstractCourseController extends AbstractController
+{
+    /**
+     * String constants for creating and updating entities.
+     */
+    public const ENTITY_CREATED = 'created';
+    public const ENTITY_UPDATED = 'updated';
+
+    /**
+     * AbstractCourseController constructor.
+     *
+     * @param ResponsePaginator $paginator
+     */
+    public function __construct(
+        public ResponsePaginator $paginator
+    ) {}
+
+    /**
+     * Showing an entity.
+     *
+     * @param Repository $repository
+     * @param int $id
+     * @param string $entityName
+     * @return JsonResponse
+     */
+    public function showEntity(
+        Repository $repository,
+        int        $id,
+        string     $entityName
+    ): JsonResponse {
+        $entity = $repository->find($id);
+
+        if ($entity) {
+            return $this->json([
+                'resource' => $entity,
+            ]);
+        }
+
+        return $this->json([
+            'message' => "No $entityName found for id $id"
+        ]);
+    }
+
+    /**
+     * Entities listing.
+     *
+     * @param Repository $repository
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function indexEntity(Repository $repository, Request $request): JsonResponse
+    {
+        $totalEntities = $repository->findAll();
+        $pageNumber = $request->query->get(ResponsePaginator::PAGE_NUMBER);
+        $entities = $this->paginator->paginate($totalEntities, $pageNumber);
+
+        return $this->json([
+            'page' => $pageNumber,
+            'resources' => $entities,
+        ]);
+    }
+
+    /**
+     * Get list of entities by property.
+     *
+     * @param Repository $repository
+     * @param mixed $value
+     * @param string $propertyName
+     * @param Request $request
+     * @param string $entityName
+     * @return JsonResponse
+     */
+    public function getByProperty(
+        Repository $repository,
+        mixed      $value,
+        string     $propertyName,
+        Request    $request,
+        string     $entityName
+    ): JsonResponse {
+        $totalEntities = $repository->findBy([$propertyName => $value]);
+
+        if ($totalEntities) {
+            $pageNumber = $request->query->get(ResponsePaginator::PAGE_NUMBER);
+            $entities = $this->paginator->paginate($totalEntities, $pageNumber);
+
+            return $this->json([
+                'page' => $pageNumber,
+                'resources' => $entities,
+            ]);
+        }
+
+        return $this->json([
+            'message' => "No $entityName found for $propertyName with value $value"
+        ]);
+    }
+
+    /**
+     * Deleting an entity.
+     *
+     * @param Repository $repository
+     * @param int $id
+     * @param string $entityName
+     * @return JsonResponse
+     */
+    public function deleteEntity(
+        Repository $repository,
+        int        $id,
+        string     $entityName
+    ): JsonResponse {
+        $entity = $repository->find($id);
+        if ($entity) {
+            $repository->remove($entity, true);
+
+            return $this->json([
+                'message' => "Resource with id $id has been deleted"
+            ]);
+        }
+
+        return $this->json([
+            'message' => "No $entityName found for id $id"
+        ]);
+    }
+}

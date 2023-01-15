@@ -1,22 +1,44 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller;
 
 use App\Entity\Course;
 use App\Form\CourseType;
 use App\Repository\CourseRepository;
+use App\Service\ResponsePaginator;
 use DateTimeImmutable;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
-class CourseController extends AbstractController
+class CourseController extends AbstractCourseController
 {
-    public function __construct(
-        private readonly CourseRepository $repository
-    ) {}
+    /**
+     * String constant for entity name.
+     */
+    private const COURSE_ENTITY_NAME = 'course';
 
+    /**
+     * CourseController constructor.
+     *
+     * @param CourseRepository $repository
+     * @param ResponsePaginator $paginator
+     */
+    public function __construct(
+        private           readonly CourseRepository $repository,
+        ResponsePaginator $paginator
+    ) {
+        parent::__construct($paginator);
+    }
+
+    /**
+     * Showing a course.
+     *
+     * @param int $id
+     * @return JsonResponse
+     */
     #[Route(
         '/course/{id}',
         name: 'course_show',
@@ -24,33 +46,35 @@ class CourseController extends AbstractController
     )]
     public function show(int $id): JsonResponse
     {
-        $course = $this->repository->find($id);
-
-        if ($course) {
-            return $this->json([
-                'course' => $course,
-            ]);
-        }
-
-        return $this->json([
-            'message' => 'No entity found for id ' . $id
-        ]);
+        return $this->showEntity(
+            $this->repository,
+            $id,
+            self::COURSE_ENTITY_NAME
+        );
     }
 
+    /**
+     * Courses listing.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
     #[Route(
         '/course',
         name: 'course',
         methods: ['GET']
     )]
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $courses = $this->repository->findAll();
-
-        return $this->json([
-            'courses' => $courses,
-        ]);
+        return $this->indexEntity($this->repository, $request);
     }
 
+    /**
+     * Creating a course.
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
     #[Route(
         '/course/create',
         name: 'course_create',
@@ -58,35 +82,19 @@ class CourseController extends AbstractController
     )]
     public function create(Request $request): JsonResponse
     {
-        $course = new Course;
-
-        $body = $request->getContent();
-        $data = json_decode($body, true);
-
-        $form = $this->createForm(CourseType::class, $course);
-        $form->submit($data);
-
-        if ($form->isValid()) {
-            $courseName = $form->getData()->getName();
-            $course->setName($courseName);
-            $course->setCreatedAt(new DateTimeImmutable('now'));
-
-            $this->repository->save($course, true);
-
-            $courseId = $course->getId();
-
-            return $this->json([
-                'message' => 'Course resource with id ' . $courseId . ' created'
-            ]);
-        }
-
-        $errors = $form->getErrors()->__toString();
-
-        return $this->json([
-            'message' => 'Unable to create resource. ' . $errors
-        ]);
+        return $this->createOrUpdate(
+            $request,
+            self::ENTITY_CREATED,
+        );
     }
 
+    /**
+     * Updating a course.
+     *
+     * @param Request $request
+     * @param int $id
+     * @return JsonResponse
+     */
     #[Route(
         '/course/update/{id}',
         name: 'course_update',
@@ -94,7 +102,57 @@ class CourseController extends AbstractController
     )]
     public function update(Request $request, int $id): JsonResponse
     {
-        $course = $this->repository->find($id);
+        return $this->createOrUpdate(
+            $request,
+            self::ENTITY_UPDATED,
+            $id
+        );
+    }
+
+    /**
+     * Deleting a course.
+     *
+     * @param int $id
+     * @return JsonResponse
+     */
+    #[Route(
+        '/course/delete/{id}',
+        name: 'course_delete',
+        methods: ['DELETE']
+    )]
+    public function delete(int $id): JsonResponse
+    {
+        return $this->deleteEntity(
+            $this->repository,
+            $id,
+            self::COURSE_ENTITY_NAME
+        );
+    }
+
+    /**
+     * Updating a course if it exists, otherwise creating it.
+     *
+     * @param Request $request
+     * @param string $createdOrUpdated
+     * @param int|null $id
+     * @return JsonResponse
+     */
+    private function createOrUpdate(
+        Request $request,
+        string  $createdOrUpdated,
+        int     $id = null
+    ): JsonResponse {
+        $course = $id ? $this->repository->find($id) : new Course();
+
+        if ($course === null) {
+           return $this->json([
+               'No '. self::COURSE_ENTITY_NAME. ' found for id ' . $id
+           ]);
+        }
+
+        if ($id === null) {
+            $course->setCreatedAt(new DateTimeImmutable('now'));
+        }
 
         $body = $request->getContent();
         $data = json_decode($body, true);
@@ -109,36 +167,20 @@ class CourseController extends AbstractController
             $this->repository->save($course, true);
 
             return $this->json([
-                'message' => 'Resource with id ' . $id . ' has been updated'
+                'message' => self::COURSE_ENTITY_NAME . " resource with id $id has been $createdOrUpdated."
             ]);
         }
 
         $errors = $form->getErrors()->__toString();
 
-        return $this->json([
-            'message' => 'Unable to update resource. ' . $errors
-        ]);
-    }
-
-    #[Route(
-        '/course/delete/{id}',
-        name: 'course_delete',
-        methods: ['DELETE']
-    )]
-    public function delete(int $id): JsonResponse
-    {
-        $course = $this->repository->find($id);
-
-        if ($course) {
-            $this->repository->remove($course, true);
-
+        if (empty($errors)) {
             return $this->json([
-                'message' => 'Resource with id ' . $id . ' has been deleted'
+                'message' => self::COURSE_ENTITY_NAME . " resource hasn't been $createdOrUpdated. Attributes are invalid."
             ]);
         }
 
         return $this->json([
-            'message' => 'No entity found for id ' . $id
+            'message' => self::COURSE_ENTITY_NAME . " resource hasn't been $createdOrUpdated. $errors"
         ]);
     }
 }

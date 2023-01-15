@@ -31,10 +31,10 @@ class ResponsePaginator
      * Paginating array of entities.
      *
      * @param array $totalItems
-     * @param string $page
+     * @param string|null $page
      * @return string[]
      */
-    public function paginate(array $totalItems, string $page = '1'): array {
+    public function paginate(array $totalItems, ?string $page = '1'): array {
         $pageNumber = intval($page);
         $itemsPerPage = $this->params->get(self::ITEMS_PER_PAGE_CONFIG);
 
@@ -48,6 +48,6 @@ class ResponsePaginator
 
         $paginated = array_chunk($totalItems, $itemsPerPage);
 
-        return $paginated[$pageNumber];
+        return $paginated[$pageNumber-1];
     }
 }
