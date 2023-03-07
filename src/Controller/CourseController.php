@@ -11,7 +11,7 @@ use App\Service\ResponsePaginator;
 use DateTimeImmutable;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 class CourseController extends AbstractCourseController
 {
@@ -37,14 +37,14 @@ class CourseController extends AbstractCourseController
      * Showing a course.
      *
      * @param int $id
-     * @return Response
+     * @return JsonResponse
      */
     #[Route(
         '/api/course/{id}',
         name: 'course_show',
         methods: ['GET']
     )]
-    public function show(int $id): Response
+    public function show(int $id): JsonResponse
     {
         return $this->showEntity(
             $this->repository,
@@ -57,14 +57,14 @@ class CourseController extends AbstractCourseController
      * Courses listing.
      *
      * @param Request $request
-     * @return Response
+     * @return JsonResponse
      */
     #[Route(
         '/api/course',
         name: 'course',
         methods: ['GET']
     )]
-    public function index(Request $request): Response
+    public function index(Request $request): JsonResponse
     {
         return $this->indexEntity($this->repository, $request);
     }
@@ -73,14 +73,14 @@ class CourseController extends AbstractCourseController
      * Creating a course.
      *
      * @param Request $request
-     * @return Response
+     * @return JsonResponse
      */
     #[Route(
         '/api/course/create',
         name: 'course_create',
         methods: ['POST']
     )]
-    public function create(Request $request): Response
+    public function create(Request $request): JsonResponse
     {
         return $this->createOrUpdate(
             $request,
@@ -93,14 +93,14 @@ class CourseController extends AbstractCourseController
      *
      * @param Request $request
      * @param int $id
-     * @return Response
+     * @return JsonResponse
      */
     #[Route(
         '/api/course/update/{id}',
         name: 'course_update',
         methods: ['POST']
     )]
-    public function update(Request $request, int $id): Response
+    public function update(Request $request, int $id): JsonResponse
     {
         return $this->createOrUpdate(
             $request,
@@ -113,14 +113,14 @@ class CourseController extends AbstractCourseController
      * Deleting a course.
      *
      * @param int $id
-     * @return Response
+     * @return JsonResponse
      */
     #[Route(
         '/api/course/delete/{id}',
         name: 'course_delete',
         methods: ['DELETE']
     )]
-    public function delete(int $id): Response
+    public function delete(int $id): JsonResponse
     {
         return $this->deleteEntity(
             $this->repository,
@@ -135,17 +135,17 @@ class CourseController extends AbstractCourseController
      * @param Request $request
      * @param string $createdOrUpdated
      * @param int|null $id
-     * @return Response
+     * @return JsonResponse
      */
     private function createOrUpdate(
         Request $request,
         string  $createdOrUpdated,
         int     $id = null
-    ): Response {
+    ): JsonResponse {
         $course = $id ? $this->repository->find($id) : new Course();
 
         if ($course === null) {
-           return $this->yaml([
+           return $this->json([
                'No '. self::COURSE_ENTITY_NAME. ' found for id ' . $id
            ]);
         }
@@ -168,7 +168,7 @@ class CourseController extends AbstractCourseController
 
             $id = $id ?: $course->getId();
 
-            return $this->yaml([
+            return $this->json([
                 'message' => self::COURSE_ENTITY_NAME . " resource with id $id has been $createdOrUpdated."
             ]);
         }
@@ -176,12 +176,12 @@ class CourseController extends AbstractCourseController
         $errors = $form->getErrors()->__toString();
 
         if (empty($errors)) {
-            return $this->yaml([
+            return $this->json([
                 'message' => self::COURSE_ENTITY_NAME . " resource hasn't been $createdOrUpdated. Attributes are invalid."
             ]);
         }
 
-        return $this->yaml([
+        return $this->json([
             'message' => self::COURSE_ENTITY_NAME . " resource hasn't been $createdOrUpdated. $errors"
         ]);
     }

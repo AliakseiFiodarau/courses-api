@@ -11,7 +11,7 @@ use App\Service\ResponsePaginator;
 use DateTimeImmutable;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 class LectureController extends AbstractCourseController
 {
@@ -38,14 +38,14 @@ class LectureController extends AbstractCourseController
      * Showing a lecture.
      *
      * @param int $id
-     * @return Response
+     * @return JsonResponse
      */
     #[Route(
         '/api/lecture/{id}',
         name: 'lecture_show',
         methods: ['GET']
     )]
-    public function show(int $id): Response
+    public function show(int $id): JsonResponse
     {
         return $this->showEntity(
             $this->repository,
@@ -58,14 +58,14 @@ class LectureController extends AbstractCourseController
      * Lectures listing.
      *
      * @param Request $request
-     * @return Response
+     * @return JsonResponse
      */
     #[Route(
         '/api/lecture',
         name: 'lecture',
         methods: ['GET']
     )]
-    public function index(Request $request): Response
+    public function index(Request $request): JsonResponse
     {
         return $this->indexEntity($this->repository, $request);
     }
@@ -75,14 +75,14 @@ class LectureController extends AbstractCourseController
      *
      * @param int $id
      * @param Request $request
-     * @return Response
+     * @return JsonResponse
      */
     #[Route(
         '/api/lecture/course/{id}',
         name: 'lecture_by_course',
         methods: ['GET']
     )]
-    public function getByCourse(int $id, Request $request): Response
+    public function getByCourse(int $id, Request $request): JsonResponse
     {
         return $this->getByProperty(
             $this->repository,
@@ -97,14 +97,14 @@ class LectureController extends AbstractCourseController
      * Creating a lecture.
      *
      * @param Request $request
-     * @return Response
+     * @return JsonResponse
      */
     #[Route(
         '/api/lecture/create',
         name: 'lecture_create',
         methods: ['POST']
     )]
-    public function create(Request $request): Response
+    public function create(Request $request): JsonResponse
     {
         return $this->createOrUpdate(
             $request,
@@ -117,14 +117,14 @@ class LectureController extends AbstractCourseController
      *
      * @param Request $request
      * @param int $id
-     * @return Response
+     * @return JsonResponse
      */
     #[Route(
         '/api/lecture/update/{id}',
         name: 'lecture_update',
         methods: ['POST']
     )]
-    public function update(Request $request, int $id): Response
+    public function update(Request $request, int $id): JsonResponse
     {
         return $this->createOrUpdate(
             $request,
@@ -137,14 +137,14 @@ class LectureController extends AbstractCourseController
      * Deleting a lecture.
      *
      * @param int $id
-     * @return Response
+     * @return JsonResponse
      */
     #[Route(
         '/api/lecture/delete/{id}',
         name: 'lecture_delete',
         methods: ['DELETE']
     )]
-    public function delete(int $id): Response
+    public function delete(int $id): JsonResponse
     {
         return $this->deleteEntity(
             $this->repository,
@@ -159,17 +159,17 @@ class LectureController extends AbstractCourseController
      * @param Request $request
      * @param string $createdOrUpdated
      * @param int|null $id
-     * @return Response
+     * @return JsonResponse
      */
     private function createOrUpdate(
         Request $request,
         string  $createdOrUpdated,
         int     $id = null
-    ): Response {
+    ): JsonResponse {
         $lecture = $id ? $this->repository->find($id) : new Lecture;
 
         if ($lecture === null) {
-            return $this->yaml([
+            return $this->json([
                 'No '. self::COURSE_ENTITY_NAME. ' found for id ' . $id
             ]);
         }
@@ -194,7 +194,7 @@ class LectureController extends AbstractCourseController
 
             $id = $id ?: $lecture->getId();
 
-            return $this->yaml([
+            return $this->json([
                 'message' => self::COURSE_ENTITY_NAME . " resource with id $id has been $createdOrUpdated."
             ]);
         }
@@ -202,12 +202,12 @@ class LectureController extends AbstractCourseController
         $errors = $form->getErrors()->__toString();
 
         if (empty($errors)) {
-            return $this->yaml([
+            return $this->json([
                 'message' => self::COURSE_ENTITY_NAME . " resource hasn't been $createdOrUpdated. Attributes are invalid."
             ]);
         }
 
-        return $this->yaml([
+        return $this->json([
             'message' => self::COURSE_ENTITY_NAME . " resource hasn't been $createdOrUpdated. $errors"
         ]);
     }
