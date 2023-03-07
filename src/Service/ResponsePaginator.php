@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Service;
 
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
+use Doctrine\ORM\Tools\Pagination\Paginator as OrmPaginator;
+use Doctrine\ORM\Query;
 
 class ResponsePaginator
 {
@@ -30,11 +32,11 @@ class ResponsePaginator
     /**
      * Paginating array of entities.
      *
-     * @param array $totalItems
+     * @param Query $query
      * @param string|null $page
-     * @return string[]
+     * @return array
      */
-    public function paginate(array $totalItems, ?string $page = '1'): array {
+    public function paginate(Query $query, ?string $page): array {
         $pageNumber = intval($page);
         $itemsPerPage = $this->params->get(self::ITEMS_PER_PAGE_CONFIG);
 
@@ -42,12 +44,17 @@ class ResponsePaginator
             return ['error message' => "incorrect page number: $page"];
         }
 
-        if ($pageNumber > ceil(count($totalItems) / $itemsPerPage)) {
+        $ormPaginator = new OrmPaginator($query);
+        $ormPaginator
+            ->getQuery()
+            ->setFirstResult($itemsPerPage * ($pageNumber - 1))
+            ->setMaxResults($itemsPerPage);
+        $total = $ormPaginator->count();
+
+        if ($pageNumber > ceil($total / $itemsPerPage)) {
             return ['error message' => "no items for page: $page"];
         }
 
-        $paginated = array_chunk($totalItems, $itemsPerPage);
-
-        return $paginated[$pageNumber-1];
+        return $query->getResult();
     }
 }

@@ -89,7 +89,6 @@ class LectureController extends AbstractCourseController
             $id,
             self::BLOG_ID_PROPERTY_NAME,
             $request,
-            self::COURSE_ENTITY_NAME
         );
     }
 

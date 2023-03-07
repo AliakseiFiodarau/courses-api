@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Course;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\Query;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -37,5 +38,11 @@ class CourseRepository extends ServiceEntityRepository
         if ($flush) {
             $this->getEntityManager()->flush();
         }
+    }
+
+    public function getQuery(string $where = ""): Query {
+        $repositoryClassName = $this->getClassName();
+        $dql = "SELECT e FROM $repositoryClassName e $where";
+        return $this->getEntityManager()->createQuery($dql);
     }
 }

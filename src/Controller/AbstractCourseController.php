@@ -10,6 +10,7 @@ use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 
 abstract class AbstractCourseController extends AbstractController
 {
@@ -59,13 +60,13 @@ abstract class AbstractCourseController extends AbstractController
      *
      * @param Repository $repository
      * @param Request $request
-     * @return JsonResponse
+     * @return JsonResponse|Paginator
      */
-    public function indexEntity(Repository $repository, Request $request): JsonResponse
+    public function indexEntity(Repository $repository, Request $request): JsonResponse|Paginator
     {
-        $totalEntities = $repository->findAll();
         $pageNumber = $request->query->get(ResponsePaginator::PAGE_NUMBER);
-        $entities = $this->paginator->paginate($totalEntities, $pageNumber);
+        $query = $repository->getQuery();
+        $entities = $this->paginator->paginate($query, $pageNumber);
 
         return $this->json([
             'page' => $pageNumber,
@@ -80,7 +81,6 @@ abstract class AbstractCourseController extends AbstractController
      * @param mixed $value
      * @param string $propertyName
      * @param Request $request
-     * @param string $entityName
      * @return JsonResponse
      */
     public function getByProperty(
@@ -88,22 +88,15 @@ abstract class AbstractCourseController extends AbstractController
         mixed      $value,
         string     $propertyName,
         Request    $request,
-        string     $entityName
     ): JsonResponse {
-        $totalEntities = $repository->findBy([$propertyName => $value]);
-
-        if ($totalEntities) {
-            $pageNumber = $request->query->get(ResponsePaginator::PAGE_NUMBER);
-            $entities = $this->paginator->paginate($totalEntities, $pageNumber);
-
-            return $this->json([
-                'page' => $pageNumber,
-                'resources' => $entities,
-            ]);
-        }
+        $pageNumber = $request->query->get(ResponsePaginator::PAGE_NUMBER);
+        $where = "WHERE e.$propertyName = $value";
+        $query = $repository->getQuery($where);
+        $entities = $this->paginator->paginate($query, $pageNumber);
 
         return $this->json([
-            'message' => "No $entityName found for $propertyName with value $value"
+            'page' => $pageNumber,
+            'resources' => $entities,
         ]);
     }
 
