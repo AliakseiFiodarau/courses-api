@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Service;
 
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
-use Doctrine\ORM\Tools\Pagination\Paginator as OrmPaginator;
 use Doctrine\ORM\Query;
 
 class ResponsePaginator
@@ -44,17 +43,12 @@ class ResponsePaginator
             return ['error message' => "incorrect page number: $page"];
         }
 
-        $ormPaginator = new OrmPaginator($query);
-        $ormPaginator
-            ->getQuery()
+        $query
             ->setFirstResult($itemsPerPage * ($pageNumber - 1))
             ->setMaxResults($itemsPerPage);
-        $total = $ormPaginator->count();
 
-        if ($pageNumber > ceil($total / $itemsPerPage)) {
-            return ['error message' => "no items for page: $page"];
-        }
+        $result = $query->getResult();
 
-        return $query->getResult();
+        return $result ?: ['error message' => "no items for page: $page"];
     }
 }
